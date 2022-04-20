@@ -1,5 +1,6 @@
 import java.util.ArrayList;
-import java.util.Arrays;
+
+import static java.lang.Integer.MAX_VALUE;
 
 
 public class Binairo {
@@ -24,8 +25,13 @@ public class Binairo {
         state.printBoard();
         drawLine();
 
-        backtrack(state);
+        backtrack(state, "MRV", "forward_checking");
         state.printBoard();
+        drawLine();
+
+        backtrack(state, "LCV", "forward_checking");
+        state.printBoard();
+        drawLine();
 
 
         long tEnd = System.nanoTime();
@@ -155,6 +161,17 @@ public class Binairo {
         return checkNumberOfCircles(state) && checkAdjacency(state) && checkIfUnique(state);
     }
 
+    private int constrainCount(State state) {
+        int count = 0;
+        if (!checkNumberOfCircles(state))
+            count++;
+        if (!checkAdjacency(state))
+            count++;
+        if (!checkIfUnique(state))
+            count++;
+        return count;
+    }
+
     private void drawLine() {
         for (int i = 0; i < n * 2; i++) {
             System.out.print("\u23E4\u23E4");
@@ -162,12 +179,12 @@ public class Binairo {
         System.out.println();
     }
 
-    private boolean backtrack(State state) {
-        choose_unassigned_variable(state,"MRV");
-        return recursiveBacktrack(state);
+    private boolean backtrack(State state, final String h, final String cp) {
+        if (h == "MRV") choose_unassigned_variable(state, "MRV");
+        return recursiveBacktrack(state, cp);
     }
 
-    private boolean recursiveBacktrack(State state) {
+    private boolean recursiveBacktrack(State state, final String cp) {
         ArrayList<ArrayList<String>> board = state.getBoard();
         ArrayList<ArrayList<ArrayList<String>>> domain = state.getDomain();
         if (isFinished(state)) {
@@ -177,7 +194,12 @@ public class Binairo {
         for (String value : domain.get(variable.getX()).get(variable.getY())) {
             state.setIndexBoard(variable.getX(), variable.getY(), value);
             if (isConsistent(state)) {
-                if (recursiveBacktrack(state)) {
+                boolean cpResult = true;
+                if (cp == "forward_checking")
+                    cpResult = forward_checking(state, variable.getX(), variable.getY());
+                else if (cp == "AC")
+                    cpResult = AC(state, variable.getX(), variable.getY());
+                if (cpResult && recursiveBacktrack(state, cp)) {
                     return true;
                 }
             }
@@ -186,7 +208,7 @@ public class Binairo {
         return false;
     }
 
-    private Coordinates choose_unassigned_variable(State state, String h) {
+    private Coordinates choose_unassigned_variable(State state, final String h) {
         ArrayList<ArrayList<String>> board = state.getBoard();
         ArrayList<ArrayList<ArrayList<String>>> domain = state.getDomain();
         if (h == "no heuristic") {
@@ -197,25 +219,44 @@ public class Binairo {
         } else if (h == "MRV") {
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    Coordinates variable = new Coordinates(i,j,board.get(i).get(j));
+                    Coordinates variable = new Coordinates(i, j, board.get(i).get(j));
                     if (board.get(i).get(j).equals("E")) {
                         int count = 0;
-                        String val = null;
+                        String value_temp = null;
                         for (String value : domain.get(i).get(j)) {
                             state.setIndexBoard(variable.getX(), variable.getY(), value);
                             if (isConsistent(state)) {
                                 count++;
-                                val = value;
+                                value_temp = value;
                             }
                         }
-                        state.setIndexBoard(variable.getX(), variable.getY(),"E");
+                        state.setIndexBoard(variable.getX(), variable.getY(), "E");
                         if (count == 1)
-                            state.setIndexBoard(variable.getX(), variable.getY(),val);
+                            state.setIndexBoard(variable.getX(), variable.getY(), value_temp);
                     }
                 }
             }
         } else if (h == "LCV") {
-            //TODO
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    Coordinates variable = new Coordinates(i, j, board.get(i).get(j));
+                    if (board.get(i).get(j).equals("E")) {
+                        int count = MAX_VALUE;
+                        String value_temp = null;
+                        for (String value : domain.get(i).get(j)) {
+                            state.setIndexBoard(variable.getX(), variable.getY(), value);
+                            int each_state_count = constrainCount(state);
+                            if (each_state_count<count) {
+                                count = each_state_count;
+                                value_temp = value;
+                            }
+                        }
+                        state.setIndexBoard(variable.getX(), variable.getY(), "E");
+
+                        state.setIndexBoard(variable.getX(), variable.getY(), value_temp);
+                    }
+                }
+            }
         }
         return null;
     }
@@ -223,7 +264,7 @@ public class Binairo {
     private boolean forward_checking(State state, int x, int y) {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                Coordinates variable = new Coordinates(i,j,board.get(i).get(j));
+                Coordinates variable = new Coordinates(i, j, board.get(i).get(j));
                 if (board.get(i).get(j).equals("E")) {
                     int count = 0;
                     String val = null;
@@ -234,9 +275,9 @@ public class Binairo {
                             val = value;
                         }
                     }
-                    state.setIndexBoard(variable.getX(), variable.getY(),"E");
+                    state.setIndexBoard(variable.getX(), variable.getY(), "E");
                     if (count == 0) {
-//                        state.setIndexBoard(variable.getX(), variable.getY(), val);
+                        //state.setIndexBoard(variable.getX(), variable.getY(), val);
                         return false;
                     }
                 }

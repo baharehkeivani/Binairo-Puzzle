@@ -119,11 +119,4 @@ public class State {
             System.out.println();
         }
     }
-
-    public void assign_single_elements() {
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                if (domain.get(i).get(j).size()==1 && domain.get(i).get(j).get(0)!= "n" && board.get(i).get(j) == "E")
-                    setIndexBoard(i, j, domain.get(i).get(j).get(0));
-    }
 }
