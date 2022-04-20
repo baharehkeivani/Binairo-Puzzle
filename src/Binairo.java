@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-
 import static java.lang.Integer.MAX_VALUE;
 
 
@@ -32,7 +31,6 @@ public class Binairo {
         backtrack(state, "LCV", "forward_checking");
         state.printBoard();
         drawLine();
-
 
         long tEnd = System.nanoTime();
         System.out.println("Total time: " + (tEnd - tStart) / 1000000000.000000000);
@@ -267,12 +265,12 @@ public class Binairo {
                 Coordinates variable = new Coordinates(i, j, board.get(i).get(j));
                 if (board.get(i).get(j).equals("E")) {
                     int count = 0;
-                    String val = null;
+                    //String val = null;
                     for (String value : domain.get(i).get(j)) {
                         state.setIndexBoard(variable.getX(), variable.getY(), value);
                         if (isConsistent(state)) {
                             count++;
-                            val = value;
+                            //val = value;
                         }
                     }
                     state.setIndexBoard(variable.getX(), variable.getY(), "E");
